@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sv arka yak</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Inter:wght@400;600&display=swap');
+
+  :root {
+    --gojo-blue: #00bfff;
+    --gojo-dark: #020813;
+    --gojo-glow: rgba(0, 191, 255, 0.6);
+    --text-main: #ffffff;
+    --text-muted: #a0b4c4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--gojo-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  #bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .infinity-overlay {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw; height: 100vh;
+    background: radial-gradient(circle at center, rgba(0, 191, 255, 0.1) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  header {
+    padding: 30px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gojo-blue);
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.2);
+    backdrop-filter: blur(10px);
+  }
+  .status-badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--gojo-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--gojo-blue);
+    animation: blink 2s infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .music-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.2);
+  }
+  .music-player:hover {
+    border-color: var(--gojo-blue);
+    box-shadow: 0 0 25px rgba(0, 191, 255, 0.4);
+  }
+  .music-icon {
+    width: 16px; height: 16px; fill: var(--gojo-blue);
+    animation: pulseMusic 2s infinite alternate;
+  }
+  .music-player.playing .music-icon {
+    animation: spinMusic 2s linear infinite;
+  }
+  .music-text {
+    font-size: 11px; font-weight: 600; color: var(--gojo-blue); text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  @keyframes pulseMusic { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.1); opacity: 1; } }
+  @keyframes spinMusic { 100% { transform: rotate(360deg); } }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 24px 60px;
+    text-align: center;
+    z-index: 10;
+  }
+
+  .gojo-avatar {
+    width: 180px; 
+    height: 180px;
+    border-radius: 50%;
+    background-image: url('https://raw.githubusercontent.com/aafiarkasyarief1405-creator/WEBBB/main/b16a0f9e4d6f54edadd63f512f6d61a8.jpg'); 
+    background-size: cover;
+    background-position: center;
+    border: 2px solid rgba(0, 191, 255, 0.5);
+    box-shadow: 0 0 30px rgba(0, 191, 255, 0.3), inset 0 0 20px rgba(0, 191, 255, 0.2);
+    margin-bottom: 24px;
+    animation: floatAvatar 6s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .gojo-avatar::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: conic-gradient(transparent, rgba(0, 191, 255, 0.4), transparent 30%);
+    animation: spin 4s linear infinite;
+    z-index: 0;
+  }
+  
+  .gojo-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  @keyframes floatAvatar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .intro-text {
+    font-family: 'Syncopate', sans-serif;
+    font-size: clamp(28px, 6vw, 52px);
+    text-transform: lowercase; /* Biar hurufnya kecil semua */
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 30px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    animation: floatText 4s ease-in-out infinite;
+  }
+  .intro-text span { color: var(--gojo-blue); text-shadow: 0 0 30px var(--gojo-glow); }
+  @keyframes floatText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+  .wa-btn {
+    background: rgba(5, 15, 30, 0.8);
+    border: 1px solid rgba(0, 191, 255, 0.4);
+    border-radius: 50px;
+    padding: 16px 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 191, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .wa-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.4), transparent);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+  }
+  .wa-btn:hover {
+    border-color: var(--gojo-blue);
+    box-shadow: 0 0 30px rgba(0, 191, 255, 0.5), inset 0 0 20px rgba(0, 191, 255, 0.2);
+    transform: translateY(-3px) scale(1.02);
+  }
+  .wa-btn:hover::after { left: 200%; transition: 0.7s; }
+
+  .wa-icon {
+    width: 28px; height: 28px;
+    fill: #25D366;
+    filter: drop-shadow(0 0 5px rgba(37, 211, 102, 0.5));
+  }
+
+  .wa-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .wa-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 2px; }
+  .wa-number { font-family: monospace; font-size: clamp(16px, 3vw, 20px); font-weight: 700; letter-spacing: 1px; color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+
+  .audio-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid var(--gojo-blue);
+    color: var(--gojo-blue);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+    backdrop-filter: blur(5px);
+    pointer-events: none;
+    animation: pulseHint 2s infinite alternate;
+    z-index: 50;
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+  
+  .audio-hint.hide { opacity: 0; pointer-events: none; }
+
+  @keyframes pulseHint {
+    0% { transform: translateX(-50%) scale(1); box-shadow: 0 0 10px rgba(0, 191, 255, 0.2); }
+    100% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 25px rgba(0, 191, 255, 0.6); }
+  }
+
+  footer {
+    padding: 24px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    z-index: 10;
+  }
+
+  .ring-decor {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px; height: 400px;
+    border: 1px solid rgba(0, 191, 255, 0.1);
+    border-radius: 50%;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .ring-decor::before, .ring-decor::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 191, 255, 0.15);
+  }
+  .ring-decor::before { width: 300px; height: 300px; animation: spin 20s linear infinite; }
+  .ring-decor::after { width: 600px; height: 600px; border: 1px solid rgba(0, 191, 255, 0.05); }
+</style>
+</head>
+<body>
+
+  <canvas id="bg-canvas"></canvas>
+  <div class="infinity-overlay"></div>
+  <div class="ring-decor"></div>
+
+  <header>
+    <div class="status-badge">Domain: Infinity</div>
+    <div class="music-player" id="music-btn">
+      <svg class="music-icon" viewBox="0 0 24 24">
+        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+      </svg>
+      <span class="music-text" id="music-status">Nyalakan Lagu</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="gojo-avatar"></div>
+
+    <!-- Teks diubah di sini -->
+    <h1 class="intro-text">
+      sv <span>arka</span> yak
+    </h1>
+
+    <a href="https://wa.me/628135750748" target="_blank" class="wa-btn">
+      <svg class="wa-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      <div class="wa-text">
+        <span class="wa-label">Chat WhatsApp</span>
+        <span class="wa-number">+62 813-5750-748</span>
+      </div>
+    </a>
+  </main>
+
+  <footer>
+    Limitless &copy; <span id="year"></span>
+  </footer>
+
+  <div class="audio-hint" id="audio-hint">Sentuh layar untuk menyalakan suara</div>
+
+  <audio id="bg-music" loop preload="auto" muted>
+    <source src="https://raw.githubusercontent.com/aafiarkasyarief1405-creator/WEBBB/main/Wardeli_mp3.mp3" type="audio/mpeg">
+    Browser lo tidak mendukung elemen audio.
+  </audio>
+
+<script>
+  // 1. Canvas Particle
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height, particles = [];
+
+  function initCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    particles = [];
+    const particleCount = window.innerWidth < 768 ? 40 : 100;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width, y: Math.random() * height,
+        radius: Math.random() * 2 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.5, speedY: (Math.random() - 0.5) * 0.5,
+        alpha: Math.random() * 0.5 + 0.1
+      });
+    }
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, width, height);
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+      p.x += p.speedX; p.y += p.speedY;
+      if (p.x < 0) p.x = width; if (p.x > width) p.x = 0;
+      if (p.y < 0) p.y = height; if (p.y > height) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 191, 255, ${p.alpha})`;
+      ctx.shadowBlur = 10; ctx.shadowColor = '#00bfff'; ctx.fill(); ctx.shadowBlur = 0;
+
+      for (let j = i + 1; j < particles.length; j++) {
+        let p2 = particles[j];
+        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+        if (dist < 120) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = `rgba(0, 191, 255, ${(1 - (dist / 120)) * 0.2})`;
+          ctx.lineWidth = 0.5; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+
+  window.addEventListener('resize', initCanvas);
+  initCanvas(); drawParticles();
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // 2. Audio Logic
+  const musicBtn = document.getElementById('music-btn');
+  const musicStatus = document.getElementById('music-status');
+  const bgMusic = document.getElementById('bg-music');
+  const audioHint = document.getElementById('audio-hint');
+  let isPlaying = false;
+
+  function tryAutoplay() {
+    bgMusic.play().then(() => {
+      musicStatus.textContent = 'Pause Melting';
+      musicBtn.classList.add('playing');
+      isPlaying = true;
+    }).catch(e => {
+      console.log('Autoplay mutlak diblokir, nunggu sentuhan.');
+    });
+  }
+
+  window.addEventListener('load', tryAutoplay);
+
+  function enableAudio(e) {
+    if (e && e.target && e.target.closest('a')) return;
+
+    if (!isPlaying) {
+      bgMusic.play().catch(() => {});
+      isPlaying = true;
+      musicStatus.textContent = 'Pause Melting';
+      musicBtn.classList.add('playing');
+    }
+    
+    bgMusic.muted = false;
+    bgMusic.volume = 0.8;
+    audioHint.classList.add('hide');
+
+    ['click', 'touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => {
+      document.removeEventListener(evt, enableAudio);
+    });
+  }
+
+  ['click', 'touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, enableAudio, { passive: true, once: true });
+  });
+
+  musicBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); 
+    if (isPlaying) {
+      bgMusic.pause();
+      musicStatus.textContent = 'Nyalakan Lagu';
+      musicBtn.classList.remove('playing');
+      isPlaying = false;
+      audioHint.classList.remove('hide');
+    } else {
+      bgMusic.muted = false;
+      bgMusic.volume = 0.8;
+      bgMusic.play();
+      musicStatus.textContent = 'Pause Melting';
+      musicBtn.classList.add('playing');
+      isPlaying = true;
+      audioHint.classList.add('hide');
+    }
+  });
+</script>
+</body>
+</html><!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sv arka yak</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Inter:wght@400;600&display=swap');
+
+  :root {
+    --gojo-blue: #00bfff;
+    --gojo-dark: #020813;
+    --gojo-glow: rgba(0, 191, 255, 0.6);
+    --text-main: #ffffff;
+    --text-muted: #a0b4c4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--gojo-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  #bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .infinity-overlay {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw; height: 100vh;
+    background: radial-gradient(circle at center, rgba(0, 191, 255, 0.1) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  header {
+    padding: 30px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gojo-blue);
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.2);
+    backdrop-filter: blur(10px);
+  }
+  .status-badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--gojo-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--gojo-blue);
+    animation: blink 2s infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .music-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.2);
+  }
+  .music-player:hover {
+    border-color: var(--gojo-blue);
+    box-shadow: 0 0 25px rgba(0, 191, 255, 0.4);
+  }
+  .music-icon {
+    width: 16px; height: 16px; fill: var(--gojo-blue);
+    animation: pulseMusic 2s infinite alternate;
+  }
+  .music-player.playing .music-icon {
+    animation: spinMusic 2s linear infinite;
+  }
+  .music-text {
+    font-size: 11px; font-weight: 600; color: var(--gojo-blue); text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  @keyframes pulseMusic { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.1); opacity: 1; } }
+  @keyframes spinMusic { 100% { transform: rotate(360deg); } }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 24px 60px;
+    text-align: center;
+    z-index: 10;
+  }
+
+  .gojo-avatar {
+    width: 180px; 
+    height: 180px;
+    border-radius: 50%;
+    background-image: url('https://raw.githubusercontent.com/aafiarkasyarief1405-creator/WEBBB/main/b16a0f9e4d6f54edadd63f512f6d61a8.jpg'); 
+    background-size: cover;
+    background-position: center;
+    border: 2px solid rgba(0, 191, 255, 0.5);
+    box-shadow: 0 0 30px rgba(0, 191, 255, 0.3), inset 0 0 20px rgba(0, 191, 255, 0.2);
+    margin-bottom: 24px;
+    animation: floatAvatar 6s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .gojo-avatar::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: conic-gradient(transparent, rgba(0, 191, 255, 0.4), transparent 30%);
+    animation: spin 4s linear infinite;
+    z-index: 0;
+  }
+  
+  .gojo-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  @keyframes floatAvatar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .intro-text {
+    font-family: 'Syncopate', sans-serif;
+    font-size: clamp(28px, 6vw, 52px);
+    text-transform: lowercase; /* Biar hurufnya kecil semua */
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 30px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    animation: floatText 4s ease-in-out infinite;
+  }
+  .intro-text span { color: var(--gojo-blue); text-shadow: 0 0 30px var(--gojo-glow); }
+  @keyframes floatText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+  .wa-btn {
+    background: rgba(5, 15, 30, 0.8);
+    border: 1px solid rgba(0, 191, 255, 0.4);
+    border-radius: 50px;
+    padding: 16px 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 191, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .wa-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.4), transparent);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+  }
+  .wa-btn:hover {
+    border-color: var(--gojo-blue);
+    box-shadow: 0 0 30px rgba(0, 191, 255, 0.5), inset 0 0 20px rgba(0, 191, 255, 0.2);
+    transform: translateY(-3px) scale(1.02);
+  }
+  .wa-btn:hover::after { left: 200%; transition: 0.7s; }
+
+  .wa-icon {
+    width: 28px; height: 28px;
+    fill: #25D366;
+    filter: drop-shadow(0 0 5px rgba(37, 211, 102, 0.5));
+  }
+
+  .wa-text { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .wa-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 2px; }
+  .wa-number { font-family: monospace; font-size: clamp(16px, 3vw, 20px); font-weight: 700; letter-spacing: 1px; color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+
+  .audio-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid var(--gojo-blue);
+    color: var(--gojo-blue);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+    backdrop-filter: blur(5px);
+    pointer-events: none;
+    animation: pulseHint 2s infinite alternate;
+    z-index: 50;
+    opacity: 1;
+    transition: opacity 0.5s;
+  }
+  
+  .audio-hint.hide { opacity: 0; pointer-events: none; }
+
+  @keyframes pulseHint {
+    0% { transform: translateX(-50%) scale(1); box-shadow: 0 0 10px rgba(0, 191, 255, 0.2); }
+    100% { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 25px rgba(0, 191, 255, 0.6); }
+  }
+
+  footer {
+    padding: 24px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    z-index: 10;
+  }
+
+  .ring-decor {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px; height: 400px;
+    border: 1px solid rgba(0, 191, 255, 0.1);
+    border-radius: 50%;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .ring-decor::before, .ring-decor::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 191, 255, 0.15);
+  }
+  .ring-decor::before { width: 300px; height: 300px; animation: spin 20s linear infinite; }
+  .ring-decor::after { width: 600px; height: 600px; border: 1px solid rgba(0, 191, 255, 0.05); }
+</style>
+</head>
+<body>
+
+  <canvas id="bg-canvas"></canvas>
+  <div class="infinity-overlay"></div>
+  <div class="ring-decor"></div>
+
+  <header>
+    <div class="status-badge">Domain: Infinity</div>
+    <div class="music-player" id="music-btn">
+      <svg class="music-icon" viewBox="0 0 24 24">
+        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+      </svg>
+      <span class="music-text" id="music-status">Nyalakan Lagu</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="gojo-avatar"></div>
+
+    <!-- Teks diubah di sini -->
+    <h1 class="intro-text">
+      sv <span>arka</span> yak
+    </h1>
+
+    <a href="https://wa.me/628135750748" target="_blank" class="wa-btn">
+      <svg class="wa-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      <div class="wa-text">
+        <span class="wa-label">Chat WhatsApp</span>
+        <span class="wa-number">+62 813-5750-748</span>
+      </div>
+    </a>
+  </main>
+
+  <footer>
+    Limitless &copy; <span id="year"></span>
+  </footer>
+
+  <div class="audio-hint" id="audio-hint">Sentuh layar untuk menyalakan suara</div>
+
+  <audio id="bg-music" loop preload="auto" muted>
+    <source src="https://raw.githubusercontent.com/aafiarkasyarief1405-creator/WEBBB/main/Wardeli_mp3.mp3" type="audio/mpeg">
+    Browser lo tidak mendukung elemen audio.
+  </audio>
+
+<script>
+  // 1. Canvas Particle
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height, particles = [];
+
+  function initCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    particles = [];
+    const particleCount = window.innerWidth < 768 ? 40 : 100;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width, y: Math.random() * height,
+        radius: Math.random() * 2 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.5, speedY: (Math.random() - 0.5) * 0.5,
+        alpha: Math.random() * 0.5 + 0.1
+      });
+    }
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, width, height);
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+      p.x += p.speedX; p.y += p.speedY;
+      if (p.x < 0) p.x = width; if (p.x > width) p.x = 0;
+      if (p.y < 0) p.y = height; if (p.y > height) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 191, 255, ${p.alpha})`;
+      ctx.shadowBlur = 10; ctx.shadowColor = '#00bfff'; ctx.fill(); ctx.shadowBlur = 0;
+
+      for (let j = i + 1; j < particles.length; j++) {
+        let p2 = particles[j];
+        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+        if (dist < 120) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = `rgba(0, 191, 255, ${(1 - (dist / 120)) * 0.2})`;
+          ctx.lineWidth = 0.5; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+
+  window.addEventListener('resize', initCanvas);
+  initCanvas(); drawParticles();
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // 2. Audio Logic
+  const musicBtn = document.getElementById('music-btn');
+  const musicStatus = document.getElementById('music-status');
+  const bgMusic = document.getElementById('bg-music');
+  const audioHint = document.getElementById('audio-hint');
+  let isPlaying = false;
+
+  function tryAutoplay() {
+    bgMusic.play().then(() => {
+      musicStatus.textContent = 'Pause Melting';
+      musicBtn.classList.add('playing');
+      isPlaying = true;
+    }).catch(e => {
+      console.log('Autoplay mutlak diblokir, nunggu sentuhan.');
+    });
+  }
+
+  window.addEventListener('load', tryAutoplay);
+
+  function enableAudio(e) {
+    if (e && e.target && e.target.closest('a')) return;
+
+    if (!isPlaying) {
+      bgMusic.play().catch(() => {});
+      isPlaying = true;
+      musicStatus.textContent = 'Pause Melting';
+      musicBtn.classList.add('playing');
+    }
+    
+    bgMusic.muted = false;
+    bgMusic.volume = 0.8;
+    audioHint.classList.add('hide');
+
+    ['click', 'touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => {
+      document.removeEventListener(evt, enableAudio);
+    });
+  }
+
+  ['click', 'touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, enableAudio, { passive: true, once: true });
+  });
+
+  musicBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); 
+    if (isPlaying) {
+      bgMusic.pause();
+      musicStatus.textContent = 'Nyalakan Lagu';
+      musicBtn.classList.remove('playing');
+      isPlaying = false;
+      audioHint.classList.remove('hide');
+    } else {
+      bgMusic.muted = false;
+      bgMusic.volume = 0.8;
+      bgMusic.play();
+      musicStatus.textContent = 'Pause Melting';
+      musicBtn.classList.add('playing');
+      isPlaying = true;
+      audioHint.classList.add('hide');
+    }
+  });
+</script>
+</body>
+</html>
